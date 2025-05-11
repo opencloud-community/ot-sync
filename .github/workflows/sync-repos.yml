@@ -16,94 +16,176 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Set up shared functions
-        run: |
-          # Define sync_repository function
-          sync_repository() {
-            # Parameters
-            SOURCE_REPO_URL="$1"
-            TARGET_REPO_URL="$2"
-            REPO_NAME="$3"
-            
-            echo "=== Processing repository: $REPO_NAME ==="
-            
-            # Extract target owner/repo for API call
-            TARGET_REPO_PATH=$(echo "$TARGET_REPO_URL" | sed 's/.*github.com\/\(.*\)\.git/\1/')
-            
-            # Check if target repository exists
-            echo "Checking if target repository exists..."
-            if ! curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.SYNC_PAT }}" "https://api.github.com/repos/$TARGET_REPO_PATH" | grep -q "200"; then
-              echo "🛑 Target repository $TARGET_REPO_PATH doesn't exist or not accessible. Please create it first."
-              return 1
-            fi
-            
-            echo "✅ Target repository exists. Proceeding with check..."
-            
-            # Get latest commit from source repository
-            SOURCE_LATEST_COMMIT=$(git ls-remote "$SOURCE_REPO_URL" HEAD | awk '{print $1}')
-            echo "📄 Latest commit in source repository: $SOURCE_LATEST_COMMIT"
-            
-            # Get latest commit from target repository
-            TARGET_LATEST_COMMIT=$(git ls-remote "https://x-access-token:${{ secrets.SYNC_PAT }}@github.com/$TARGET_REPO_PATH.git" HEAD | awk '{print $1}')
-            echo "📄 Latest commit in target repository: $TARGET_LATEST_COMMIT"
-            
-            # Compare commits
-            if [ "$SOURCE_LATEST_COMMIT" = "$TARGET_LATEST_COMMIT" ]; then
-              echo "✅ Repositories are already in sync. Skipping synchronization."
-              return 0
-            fi
-            
-            echo "🔄 Repositories are not in sync. Proceeding with synchronization..."
-            
-            # Create temporary directory
-            TMP_DIR="./tmp/$REPO_NAME"
-            mkdir -p "$TMP_DIR"
-            cd "$TMP_DIR"
-            
-            # Clone source repository from GitLab
-            echo "📥 Cloning source repository..."
-            git clone --mirror "$SOURCE_REPO_URL" .
-            
-            # Configure Git
-            git config --global user.name 'GitHub Action'
-            git config --global user.email 'action@github.com'
-            
-            # Configure GitHub remote with PAT
-            echo "🔗 Configuring GitHub remote..."
-            git remote add github "https://x-access-token:${{ secrets.SYNC_PAT }}@github.com/$TARGET_REPO_PATH.git"
-            
-            # Push to GitHub target repository
-            echo "📤 Pushing to GitHub target repository..."
-            git push --mirror github
-            
-            # Cleanup
-            cd ../..
-            rm -rf "$TMP_DIR"
-            
-            echo "✅ Successfully synchronized $REPO_NAME repository."
-            echo "=================================================="
-          }
-          
-          # Export the function
-          export -f sync_repository
-      
       - name: Sync ot-setup repository
         run: |
-          sync_repository \
-            "https://gitlab.opencode.de/opentalk/ot-setup.git" \
-            "github.com:opencloud-community/ot-setup.git" \
-            "ot-setup"
+          # Extract target owner/repo for API call
+          TARGET_REPO_PATH=$(echo "github.com:opencloud-community/ot-setup.git" | sed 's/.*github.com[:\/]\(.*\)\.git/\1/')
+          
+          # Check if target repository exists
+          echo "=== Processing repository: ot-setup ==="
+          echo "Checking if target repository exists..."
+          if ! curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.SYNC_PAT }}" "https://api.github.com/repos/$TARGET_REPO_PATH" | grep -q "200"; then
+            echo "🛑 Target repository $TARGET_REPO_PATH doesn't exist or not accessible. Please create it first."
+            exit 1
+          fi
+          
+          echo "✅ Target repository exists. Proceeding with check..."
+          
+          # Get latest commit from source repository
+          SOURCE_LATEST_COMMIT=$(git ls-remote "https://gitlab.opencode.de/opentalk/ot-setup.git" HEAD | awk '{print $1}')
+          echo "📄 Latest commit in source repository: $SOURCE_LATEST_COMMIT"
+          
+          # Get latest commit from target repository
+          TARGET_LATEST_COMMIT=$(git ls-remote "https://x-access-token:${{ secrets.SYNC_PAT }}@github.com/$TARGET_REPO_PATH.git" HEAD | awk '{print $1}')
+          echo "📄 Latest commit in target repository: $TARGET_LATEST_COMMIT"
+          
+          # Compare commits
+          if [ "$SOURCE_LATEST_COMMIT" = "$TARGET_LATEST_COMMIT" ]; then
+            echo "✅ Repositories are already in sync. Skipping synchronization."
+            exit 0
+          fi
+          
+          echo "🔄 Repositories are not in sync. Proceeding with synchronization..."
+          
+          # Create temporary directory
+          mkdir -p ./tmp/ot-setup
+          cd ./tmp/ot-setup
+          
+          # Clone source repository from GitLab
+          echo "📥 Cloning source repository..."
+          git clone --mirror "https://gitlab.opencode.de/opentalk/ot-setup.git" .
+          
+          # Configure Git
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          
+          # Configure GitHub remote with PAT
+          echo "🔗 Configuring GitHub remote..."
+          git remote add github "https://x-access-token:${{ secrets.SYNC_PAT }}@github.com/$TARGET_REPO_PATH.git"
+          
+          # Push to GitHub target repository
+          echo "📤 Pushing to GitHub target repository..."
+          git push --mirror github
+          
+          # Cleanup
+          cd ../..
+          rm -rf ./tmp/ot-setup
+          
+          echo "✅ Successfully synchronized ot-setup repository."
+          echo "=================================================="
       
       - name: Sync ot-docs repository
         run: |
-          sync_repository \
-            "https://gitlab.opencode.de/opentalk/docs.git" \
-            "github.com:opencloud-community/ot-docs.git" \
-            "ot-docs"
+          # Extract target owner/repo for API call
+          TARGET_REPO_PATH=$(echo "github.com:opencloud-community/ot-docs.git" | sed 's/.*github.com[:\/]\(.*\)\.git/\1/')
+          
+          # Check if target repository exists
+          echo "=== Processing repository: ot-docs ==="
+          echo "Checking if target repository exists..."
+          if ! curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.SYNC_PAT }}" "https://api.github.com/repos/$TARGET_REPO_PATH" | grep -q "200"; then
+            echo "🛑 Target repository $TARGET_REPO_PATH doesn't exist or not accessible. Please create it first."
+            exit 1
+          fi
+          
+          echo "✅ Target repository exists. Proceeding with check..."
+          
+          # Get latest commit from source repository
+          SOURCE_LATEST_COMMIT=$(git ls-remote "https://gitlab.opencode.de/opentalk/docs.git" HEAD | awk '{print $1}')
+          echo "📄 Latest commit in source repository: $SOURCE_LATEST_COMMIT"
+          
+          # Get latest commit from target repository
+          TARGET_LATEST_COMMIT=$(git ls-remote "https://x-access-token:${{ secrets.SYNC_PAT }}@github.com/$TARGET_REPO_PATH.git" HEAD | awk '{print $1}')
+          echo "📄 Latest commit in target repository: $TARGET_LATEST_COMMIT"
+          
+          # Compare commits
+          if [ "$SOURCE_LATEST_COMMIT" = "$TARGET_LATEST_COMMIT" ]; then
+            echo "✅ Repositories are already in sync. Skipping synchronization."
+            exit 0
+          fi
+          
+          echo "🔄 Repositories are not in sync. Proceeding with synchronization..."
+          
+          # Create temporary directory
+          mkdir -p ./tmp/ot-docs
+          cd ./tmp/ot-docs
+          
+          # Clone source repository from GitLab
+          echo "📥 Cloning source repository..."
+          git clone --mirror "https://gitlab.opencode.de/opentalk/docs.git" .
+          
+          # Configure Git
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          
+          # Configure GitHub remote with PAT
+          echo "🔗 Configuring GitHub remote..."
+          git remote add github "https://x-access-token:${{ secrets.SYNC_PAT }}@github.com/$TARGET_REPO_PATH.git"
+          
+          # Push to GitHub target repository
+          echo "📤 Pushing to GitHub target repository..."
+          git push --mirror github
+          
+          # Cleanup
+          cd ../..
+          rm -rf ./tmp/ot-docs
+          
+          echo "✅ Successfully synchronized ot-docs repository."
+          echo "=================================================="
           
       - name: Sync ot-controller repository
         run: |
-          sync_repository \
-            "https://gitlab.opencode.de/opentalk/controller.git" \
-            "github.com:opencloud-community/ot-controller.git" \
-            "ot-controller"
+          # Extract target owner/repo for API call
+          TARGET_REPO_PATH=$(echo "github.com:opencloud-community/ot-controller.git" | sed 's/.*github.com[:\/]\(.*\)\.git/\1/')
+          
+          # Check if target repository exists
+          echo "=== Processing repository: ot-controller ==="
+          echo "Checking if target repository exists..."
+          if ! curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.SYNC_PAT }}" "https://api.github.com/repos/$TARGET_REPO_PATH" | grep -q "200"; then
+            echo "🛑 Target repository $TARGET_REPO_PATH doesn't exist or not accessible. Please create it first."
+            exit 1
+          fi
+          
+          echo "✅ Target repository exists. Proceeding with check..."
+          
+          # Get latest commit from source repository
+          SOURCE_LATEST_COMMIT=$(git ls-remote "https://gitlab.opencode.de/opentalk/controller.git" HEAD | awk '{print $1}')
+          echo "📄 Latest commit in source repository: $SOURCE_LATEST_COMMIT"
+          
+          # Get latest commit from target repository
+          TARGET_LATEST_COMMIT=$(git ls-remote "https://x-access-token:${{ secrets.SYNC_PAT }}@github.com/$TARGET_REPO_PATH.git" HEAD | awk '{print $1}')
+          echo "📄 Latest commit in target repository: $TARGET_LATEST_COMMIT"
+          
+          # Compare commits
+          if [ "$SOURCE_LATEST_COMMIT" = "$TARGET_LATEST_COMMIT" ]; then
+            echo "✅ Repositories are already in sync. Skipping synchronization."
+            exit 0
+          fi
+          
+          echo "🔄 Repositories are not in sync. Proceeding with synchronization..."
+          
+          # Create temporary directory
+          mkdir -p ./tmp/ot-controller
+          cd ./tmp/ot-controller
+          
+          # Clone source repository from GitLab
+          echo "📥 Cloning source repository..."
+          git clone --mirror "https://gitlab.opencode.de/opentalk/controller.git" .
+          
+          # Configure Git
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          
+          # Configure GitHub remote with PAT
+          echo "🔗 Configuring GitHub remote..."
+          git remote add github "https://x-access-token:${{ secrets.SYNC_PAT }}@github.com/$TARGET_REPO_PATH.git"
+          
+          # Push to GitHub target repository
+          echo "📤 Pushing to GitHub target repository..."
+          git push --mirror github
+          
+          # Cleanup
+          cd ../..
+          rm -rf ./tmp/ot-controller
+          
+          echo "✅ Successfully synchronized ot-controller repository."
+          echo "=================================================="

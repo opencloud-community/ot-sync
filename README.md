@@ -23,18 +23,26 @@ The workflow uses a Personal Access Token (PAT) stored as the `SYNC_PAT` secret 
 
 ## Adding New Repositories
 
-To add a new repository to be synchronized, simply add a new step to the workflow file with the appropriate parameters:
+To add a new repository to be synchronized, copy an existing sync step in the workflow file and modify the repository details:
 
 ```yaml
 - name: Sync new-repository-name
   run: |
-    sync_repository \
-      "https://gitlab.opencode.de/opentalk/new-repo-path.git" \
-      "github.com:opencloud-community/new-repo-name.git" \
-      "new-repo-name"
+    # Extract target owner/repo for API call
+    TARGET_REPO_PATH=$(echo "github.com:opencloud-community/new-repo-name.git" | sed 's/.*github.com[:\/]\(.*\)\.git/\1/')
+
+    # Check if target repository exists
+    echo "=== Processing repository: new-repo-name ==="
+    echo "Checking if target repository exists..."
+    if ! curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.SYNC_PAT }}" "https://api.github.com/repos/$TARGET_REPO_PATH" | grep -q "200"; then
+      echo "🛑 Target repository $TARGET_REPO_PATH doesn't exist or not accessible. Please create it first."
+      exit 1
+    fi
+
+    # ... rest of the sync logic ...
 ```
 
-The workflow is designed to be modular and reusable, following the DRY (Don't Repeat Yourself) principle.
+The workflow follows a structured approach for each repository to ensure reliability across different GitHub Actions environments.
 
 ## Manual Trigger
 

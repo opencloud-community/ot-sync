@@ -4,30 +4,20 @@ This repository contains a GitHub Action that synchronizes repositories from Git
 
 ## Repositories Synchronized
 
-- `https://gitlab.opencode.de/opentalk/ot-setup.git` → `git@github.com:opencloud-community/ot-setup.git`
-- `https://gitlab.opencode.de/opentalk/docs.git` → `git@github.com:opencloud-community/ot-docs.git`
+- `https://gitlab.opencode.de/opentalk/ot-setup.git` → `github.com:opencloud-community/ot-setup.git`
+- `https://gitlab.opencode.de/opentalk/docs.git` → `github.com:opencloud-community/ot-docs.git`
 
-## Setup Instructions
+## About the Workflow
 
-For the synchronization to work, you need to set up an SSH deploy key with write access:
+The synchronization is handled by a GitHub Actions workflow that:
 
-1. Generate an SSH key pair:
-   ```bash
-   ssh-keygen -t ed25519 -C "github-actions@github.com" -f id_sync
-   ```
+1. Runs automatically every 6 hours (at 0:00, 6:00, 12:00, and 18:00 UTC)
+2. Can be triggered manually through the GitHub UI
+3. Uses the GitHub CLI (gh) for authentication
+4. Clones the source repositories from GitLab
+5. Pushes the content to the target GitHub repositories
 
-2. Add the **private key** as a repository secret in this repository:
-   - Go to Settings > Secrets and variables > Actions
-   - Create a new repository secret named `SYNC_SSH_PRIVATE_KEY`
-   - Paste the contents of the `id_sync` file (private key)
-
-3. Add the **public key** as a deploy key to both target repositories:
-   - Go to Settings > Deploy keys in each target repository
-   - Add a new deploy key with the contents of `id_sync.pub` (public key)
-   - Make sure to check "Allow write access"
-   - Name it something like "Repository Sync Action"
-
-4. Update the GitHub Action workflow file (`.github/workflows/sync-repos.yml`) to use the SSH key
+The workflow uses the default `GITHUB_TOKEN` provided by GitHub Actions, so no additional secrets need to be configured.
 
 ## Manual Trigger
 

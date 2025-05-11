@@ -16,19 +16,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.SYNC_SSH_PRIVATE_KEY }}
-      
-      - name: Set up Git credentials
+      - name: Setup GitHub CLI
+        uses: cli/setup-gh@v1
+        
+      - name: Configure GitHub CLI authentication
         run: |
-          git config --global user.name 'GitHub Action'
-          git config --global user.email 'action@github.com'
-          
-          # Add GitHub to known hosts
-          mkdir -p ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
       
       - name: Sync ot-setup repository
         run: |
@@ -39,8 +32,12 @@ jobs:
           # Clone source repository from GitLab
           git clone --mirror https://gitlab.opencode.de/opentalk/ot-setup.git .
           
-          # Push to GitHub target repository
-          git push --mirror git@github.com:opencloud-community/ot-setup.git
+          # Configure Git
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          
+          # Push to GitHub target repository using gh auth
+          GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh repo sync opencloud-community/ot-setup --source .
           
           # Cleanup
           cd ../..
@@ -55,8 +52,12 @@ jobs:
           # Clone source repository from GitLab
           git clone --mirror https://gitlab.opencode.de/opentalk/docs.git .
           
-          # Push to GitHub target repository
-          git push --mirror git@github.com:opencloud-community/ot-docs.git
+          # Configure Git
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          
+          # Push to GitHub target repository using gh auth
+          GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh repo sync opencloud-community/ot-docs --source .
           
           # Cleanup
           cd ../..

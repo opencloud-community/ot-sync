@@ -11,14 +11,15 @@ on:
 jobs:
   sync-repositories:
     runs-on: ubuntu-latest
+    # Add permissions for the GITHUB_TOKEN
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Setup GitHub CLI
-        uses: cli/setup-gh@v1
-        
+      # Use pre-installed GitHub CLI instead of setup action
       - name: Configure GitHub CLI authentication
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
@@ -36,8 +37,12 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           
-          # Push to GitHub target repository using gh auth
-          GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh repo sync opencloud-community/ot-setup --source .
+          # Use git push instead of gh repo sync
+          # Configure GitHub remote with token
+          git remote add github https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/opencloud-community/ot-setup.git
+          
+          # Push to GitHub target repository
+          git push --mirror github
           
           # Cleanup
           cd ../..
@@ -56,8 +61,12 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           
-          # Push to GitHub target repository using gh auth
-          GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh repo sync opencloud-community/ot-docs --source .
+          # Use git push instead of gh repo sync
+          # Configure GitHub remote with token
+          git remote add github https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/opencloud-community/ot-docs.git
+          
+          # Push to GitHub target repository
+          git push --mirror github
           
           # Cleanup
           cd ../..

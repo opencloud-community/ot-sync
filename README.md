@@ -6,6 +6,7 @@ This repository contains a GitHub Action that synchronizes repositories from Git
 
 - `https://gitlab.opencode.de/opentalk/ot-setup.git` → `github.com:opencloud-community/ot-setup.git`
 - `https://gitlab.opencode.de/opentalk/docs.git` → `github.com:opencloud-community/ot-docs.git`
+- `https://gitlab.opencode.de/opentalk/controller.git` → `github.com:opencloud-community/ot-controller.git`
 
 ## About the Workflow
 
@@ -13,11 +14,27 @@ The synchronization is handled by a GitHub Actions workflow that:
 
 1. Runs automatically every 6 hours (at 0:00, 6:00, 12:00, and 18:00 UTC)
 2. Can be triggered manually through the GitHub UI
-3. Uses the GitHub CLI (gh) for authentication
-4. Clones the source repositories from GitLab
-5. Pushes the content to the target GitHub repositories
+3. Verifies target repositories exist before attempting synchronization
+4. Compares latest commits to check if synchronization is needed
+5. Clones the source repositories from GitLab (only if changes detected)
+6. Pushes the content to the target GitHub repositories
 
-The workflow uses the default `GITHUB_TOKEN` provided by GitHub Actions, so no additional secrets need to be configured.
+The workflow uses a Personal Access Token (PAT) stored as the `SYNC_PAT` secret for authentication with GitHub, which allows cross-repository access.
+
+## Adding New Repositories
+
+To add a new repository to be synchronized, simply add a new step to the workflow file with the appropriate parameters:
+
+```yaml
+- name: Sync new-repository-name
+  run: |
+    sync_repository \
+      "https://gitlab.opencode.de/opentalk/new-repo-path.git" \
+      "github.com:opencloud-community/new-repo-name.git" \
+      "new-repo-name"
+```
+
+The workflow is designed to be modular and reusable, following the DRY (Don't Repeat Yourself) principle.
 
 ## Manual Trigger
 

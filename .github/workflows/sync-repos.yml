@@ -1,0 +1,54 @@
+name: Sync repositories
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+  
+  # Run every 6 hours
+  schedule:
+    - cron: '0 */6 * * *'
+
+jobs:
+  sync-repositories:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Git credentials
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+      
+      - name: Sync ot-setup repository
+        run: |
+          # Create temporary directory
+          mkdir -p ./tmp/ot-setup
+          cd ./tmp/ot-setup
+          
+          # Clone source repository from GitLab
+          git clone --mirror https://gitlab.opencode.de/opentalk/ot-setup.git .
+          
+          # Push to GitHub target repository
+          git push --mirror git@github.com:opencloud-community/ot-setup.git
+          
+          # Cleanup
+          cd ../..
+          rm -rf ./tmp/ot-setup
+      
+      - name: Sync ot-docs repository
+        run: |
+          # Create temporary directory
+          mkdir -p ./tmp/ot-docs
+          cd ./tmp/ot-docs
+          
+          # Clone source repository from GitLab
+          git clone --mirror https://gitlab.opencode.de/opentalk/docs.git .
+          
+          # Push to GitHub target repository
+          git push --mirror git@github.com:opencloud-community/ot-docs.git
+          
+          # Cleanup
+          cd ../..
+          rm -rf ./tmp/ot-docs
